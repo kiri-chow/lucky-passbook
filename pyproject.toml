@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "recom-system"
+version = "0.1.0"
+description = "Group Project of RS"
+authors = ["Anthony Chow <mrchowpoor@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "^1.26.4"
+scikit-learn = "^1.4.2"
+matplotlib = "^3.8.4"
+scikit-surprise = "^1.1.3"
+flask = "^3.0.3"
+pandas = "^2.2.2"
+sqlalchemy = "^2.0.29"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
