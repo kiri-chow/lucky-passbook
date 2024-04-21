@@ -12,6 +12,23 @@ files = [
 ]
 
 [[package]]
+name = "bayesian-optimization"
+version = "1.4.3"
+description = "Bayesian Optimization package"
+optional = false
+python-versions = ">= 3.7"
+files = [
+    {file = "bayesian-optimization-1.4.3.tar.gz", hash = "sha256:f9a448e1b52d961301cbc953ce4199709f6c26b1c88994c9b4dadb7752a64550"},
+    {file = "bayesian_optimization-1.4.3-py3-none-any.whl", hash = "sha256:2719272d5825f1ba7d7609f3b1c1fdca13eba1b7ad52a5ca2e62f34154ecae28"},
+]
+
+[package.dependencies]
+colorama = ">=0.4.6"
+numpy = ">=1.9.0"
+scikit-learn = ">=0.18.0"
+scipy = ">=1.0.0"
+
+[[package]]
 name = "blinker"
 version = "1.7.0"
 description = "Fast, simple object-to-object and broadcast signaling"
@@ -222,6 +239,24 @@ all = ["cloudpathlib[azure]", "cloudpathlib[gs]", "cloudpathlib[s3]"]
 azure = ["azure-storage-blob (>=12)"]
 gs = ["google-cloud-storage"]
 s3 = ["boto3"]
+
+[[package]]
+name = "cma"
+version = "3.3.0"
+description = "CMA-ES, Covariance Matrix Adaptation Evolution Strategy for non-linear numerical optimization in Python"
+optional = false
+python-versions = "*"
+files = [
+    {file = "cma-3.3.0-py3-none-any.whl", hash = "sha256:5cc571b1e2068fcf1c538be36f8f3a870107456fed22ce81c1345a96329e61db"},
+    {file = "cma-3.3.0.tar.gz", hash = "sha256:b748b8e03f4e7ae816157d7b9bb2fc6b1fb2fee1d5fd3399329b646bb75861ec"},
+]
+
+[package.dependencies]
+numpy = "*"
+
+[package.extras]
+constrained-solution-tracking = ["moarchiving"]
+plotting = ["matplotlib"]
 
 [[package]]
 name = "colorama"
@@ -982,6 +1017,29 @@ developer = ["changelist (==0.5)", "mypy (>=1.1)", "pre-commit (>=3.2)", "rtoml"
 doc = ["myst-nb (>=1.0)", "numpydoc (>=1.7)", "pillow (>=9.4)", "pydata-sphinx-theme (>=0.14)", "sphinx (>=7)", "sphinx-gallery (>=0.14)", "texext (>=0.6.7)"]
 extra = ["lxml (>=4.6)", "pydot (>=2.0)", "pygraphviz (>=1.12)", "sympy (>=1.10)"]
 test = ["pytest (>=7.2)", "pytest-cov (>=4.0)"]
+
+[[package]]
+name = "nevergrad"
+version = "1.0.2"
+description = "A Python toolbox for performing gradient-free optimization"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "nevergrad-1.0.2-py3-none-any.whl", hash = "sha256:3bcb6fe1fdfb57bcde225af42db2a55142c51aa249dd333f9ec58933e118c056"},
+    {file = "nevergrad-1.0.2.tar.gz", hash = "sha256:8c7795bebd5694c2d906e14a900d44279b6982199a12a9295f7e8410d94dd776"},
+]
+
+[package.dependencies]
+bayesian-optimization = ">=1.2.0"
+cma = ">=2.6.0"
+numpy = ">=1.24.0"
+pandas = "*"
+typing-extensions = ">=3.6.6"
+
+[package.extras]
+all = ["IOHexperimenter (>=0.2.8.7)", "Keras-Preprocessing", "Pillow (>=8.4.0)", "Py-BOBYQA (>=1.2)", "autodocsumm (>=0.1.11)", "ax-platform", "bayes-optim (==0.3.0)", "black (==22.3.0)", "cdt (>=0.5.23)", "directsearch (==1.0)", "docutils (==0.17.1)", "fcmaes (>=1.2.7)", "glfw", "gym (==0.24.1)", "gym-anm (>=1.0.1)", "hiplot", "hyperopt (>=0.2.5)", "image-quality (>=1.2.7)", "keras (>=2.4.3)", "loguru", "matplotlib (>=2.2.3)", "mixsimulator (>=0.3.3)", "mujoco", "mypy (>=0.800)", "nlopt", "olymp (==0.0.1b0)", "opencv-python (>=4.1.2.30)", "openpyxl (>=3.0.0)", "pandas (>=0.23.4)", "poap", "pySOT", "pybullet (>=3.2.2)", "pygame (>=2.1.2)", "pylint (>=2.4.4)", "pymoo (==0.5.0)", "pyomo (==5.7.1)", "pyparsing (==2.2.1)", "pyproj", "pytest (>=4.3.0)", "pytest-circleci-parallelized", "pytest-cov (>=2.6.1)", "recommonmark (>=0.5.0)", "requests (>=2.21.0)", "scikit-image (==0.18.3)", "scikit-learn (>=1.0.1)", "scikit-optimize", "scipy", "setuptools (>=41.2.0)", "silence-tensorflow", "smac (>=2.0.1)", "sphinx (>=3.3.0)", "sphinx-rtd-theme (>=0.4.3)", "tensorflow (>=2.7.0)", "tensorflow-estimator (>=2.7.0)", "tensorflow-probability", "torch (>=1.7.0)", "torchvision (>=0.11.1)", "tqdm", "twine (>=3.1.1)", "wheel (>=0.33.6)", "xlrd (>=1.2.0)", "xlwt (>=1.3.0)"]
+benchmark = ["IOHexperimenter (>=0.2.8.7)", "Keras-Preprocessing", "Pillow (>=8.4.0)", "Py-BOBYQA (>=1.2)", "ax-platform", "bayes-optim (==0.3.0)", "cdt (>=0.5.23)", "directsearch (==1.0)", "fcmaes (>=1.2.7)", "glfw", "gym (==0.24.1)", "gym-anm (>=1.0.1)", "hiplot", "hyperopt (>=0.2.5)", "image-quality (>=1.2.7)", "keras (>=2.4.3)", "loguru", "matplotlib (>=2.2.3)", "mixsimulator (>=0.3.3)", "mujoco", "nlopt", "olymp (==0.0.1b0)", "opencv-python (>=4.1.2.30)", "openpyxl (>=3.0.0)", "pandas (>=0.23.4)", "poap", "pySOT", "pybullet (>=3.2.2)", "pygame (>=2.1.2)", "pymoo (==0.5.0)", "pyomo (==5.7.1)", "pyproj", "pytest-circleci-parallelized", "requests (>=2.21.0)", "scikit-image (==0.18.3)", "scikit-learn (>=1.0.1)", "scikit-optimize", "scipy", "silence-tensorflow", "smac (>=2.0.1)", "tensorflow (>=2.7.0)", "tensorflow-estimator (>=2.7.0)", "tensorflow-probability", "torch (>=1.7.0)", "torchvision (>=0.11.1)", "tqdm", "xlrd (>=1.2.0)", "xlwt (>=1.3.0)"]
+dev = ["autodocsumm (>=0.1.11)", "black (==22.3.0)", "docutils (==0.17.1)", "mypy (>=0.800)", "pandas (>=0.23.4)", "pylint (>=2.4.4)", "pyparsing (==2.2.1)", "pytest (>=4.3.0)", "pytest-cov (>=2.6.1)", "recommonmark (>=0.5.0)", "setuptools (>=41.2.0)", "sphinx (>=3.3.0)", "sphinx-rtd-theme (>=0.4.3)", "twine (>=3.1.1)", "wheel (>=0.33.6)"]
 
 [[package]]
 name = "numpy"
@@ -2760,4 +2818,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "8f99446841deff57f7805fae6ca80f5bdefb0512b430b3f9693c1c66c72abbc6"
+content-hash = "f947cf6b24396acebed9a45b3928f00d1c715766ce7931f19ff4c63821f00774"
