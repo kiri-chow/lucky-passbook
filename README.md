@@ -17,7 +17,7 @@ poetry install
 
 ## Test Data
 You can download the
-[cleaned database](https://drive.google.com/file/d/1JyNFd_x01dlyuP62EU_BP9tD8h2Bv04t/view?usp=drive_link)
+[cleaned database](https://drive.google.com/file/d/1qWrqmYwq_7sr7p1RF5QCNvM7_pCvPr_S/view?usp=drivesdk)
 and put it into the `./instance` dir for developing or testing.
 
 ## Server
