@@ -19,7 +19,7 @@ URL = os.getenv('RS_SQLURL')
 if not URL:
     URL = 'sqlite:///' + os.path.abspath(
         os.path.join(
-            os.path.split(__file__)[0], '..', 'instance-dev', 'data.db'
+            os.path.split(__file__)[0], '..', 'instance', 'data.db'
         )
     )
 

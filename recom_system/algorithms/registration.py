@@ -35,6 +35,8 @@ def vectorize_book(book):
         sents.append(sent.text)
 
     # vectorize sentences
+    if len(sents) == 0:
+        return np.zeros(384)
     if len(book.title.split(' ')) < 2:
         vectors = LLM.encode(sents)
     else:
