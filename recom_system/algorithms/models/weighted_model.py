@@ -57,8 +57,13 @@ class WeightedModel(AlgoBase):
 
         return self
 
+    def default_prediction(self):
+        return 0
+
     def _determine_weights(self, user_id):
         user_ratings = self.trainset.ur[user_id]
+        if not user_ratings:
+            return self.weights
 
         target = np.array([r for _, r in user_ratings])
         preds = np.array([

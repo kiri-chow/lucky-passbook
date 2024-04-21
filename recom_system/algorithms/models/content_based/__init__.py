@@ -5,7 +5,7 @@ Created on Sun Apr 21 20:09:41 2024
 
 @author: anthony
 """
-from surprise import AlgoBase
+from surprise import AlgoBase, PredictionImpossible
 import numpy as np
 
 
@@ -44,22 +44,39 @@ class ContentBasedModel(AlgoBase):
 
         return self
 
+    def default_prediction(self):
+        return 0
+
     def estimate(self, user_id, item_id):
         "predict the rating of given user and item"
         if self.fit_and_build:
-            user_profile = self.user_profiles[user_id]
+            try:
+                user_profile = self.user_profiles[user_id]
+            except KeyError:
+                raise PredictionImpossible("Unknown User")
         else:
             user_profile = self._get_user_profile(user_id)
-        item_profile = self.item_matrix.loc[self.to_raw_iid(item_id)]
+        try:
+            iid = self.to_raw_iid(item_id)
+        except ValueError:
+            raise PredictionImpossible("Unknown Item")
+        item_profile = self.item_matrix.loc[iid]
         return user_profile.dot(item_profile)
 
     def estimate_batch(self, user_id, item_idx):
         "estimate a batch of items for a single user"
         if self.fit_and_build:
-            user_profile = self.user_profiles[user_id]
+            try:
+                user_profile = self.user_profiles[user_id]
+            except KeyError:
+                raise PredictionImpossible("Unknown User")
         else:
             user_profile = self._get_user_profile(user_id)
-        item_profile = self.item_matrix.loc[self.to_raw_iid(item_idx)]
+        try:
+            iid = self.to_raw_iid(item_idx)
+        except ValueError:
+            raise PredictionImpossible("Unknown Item")
+        item_profile = self.item_matrix.loc[iid]
         return user_profile.dot(item_profile.T)
 
     def _get_user_profile(self, user_id):

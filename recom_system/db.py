@@ -10,6 +10,7 @@ import sqlalchemy
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import (
     Column, Integer, String, Boolean, JSON, Text,
+    ForeignKey, UniqueConstraint
 )
 
 
@@ -27,6 +28,10 @@ engine = sqlalchemy.create_engine(URL)
 
 
 Base = declarative_base()
+
+
+def get_columns(table):
+    return [col.name for col in table.__table__.columns]
 
 
 class Users(Base):
@@ -49,13 +54,17 @@ class Ratings(Base):
 
     id = Column(Integer, primary_key=True)
 
-    user_id = Column(Integer)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
 
-    book_id = Column(Integer)
+    book_id = Column(Integer, ForeignKey('books.id'), nullable=False)
 
-    is_read = Column(Boolean)
+    is_read = Column(Boolean, nullable=False, default=True)
 
-    rating = Column(Integer)
+    rating = Column(Integer, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'book_id', name='uid_bid'),
+    )
 
     def __repr__(self):
         return f'<Rating(user={self.user_id}, book={self.book_id}, rating={self.rating})>'

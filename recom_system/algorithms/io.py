@@ -8,7 +8,7 @@ Created on Sun Apr 21 00:13:23 2024
 from collections.abc import Iterable
 import pandas as pd
 from sqlalchemy import select
-from recom_system.db import Ratings, Books, engine
+from recom_system.db import Ratings, Books, Users, engine
 
 
 def get_ratings(uidx=None, bidx=None):
@@ -37,6 +37,18 @@ def get_books(bidx=None):
             query = query.where(Books.id.in_(bidx))
         else:
             query = query.where(Books.id == bidx)
+    with engine.begin() as con:
+        df = pd.read_sql(query, con)
+    return df
+
+
+def get_users(uidx=None):
+    query = select(Users)
+    if uidx is not None:
+        if isinstance(uidx, Iterable):
+            query = query.where(Users.id.in_(uidx))
+        else:
+            query = query.where(Users.id == uidx)
     with engine.begin() as con:
         df = pd.read_sql(query, con)
     return df
