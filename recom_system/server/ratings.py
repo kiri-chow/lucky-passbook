@@ -17,11 +17,11 @@ bp = Blueprint('ratings', __name__, url_prefix='/ratings')
 def get_ratings():
     "get ratings"
     # check user id or item id
-    user_id = request.args.get('user_id')
-    item_id = request.args.get('item_id')
+    user_id = request.args.get('uid')
+    item_id = request.args.get('iid')
 
     if user_id is None and item_id is None:
-        return jsonify({"message": "requiring either user_id or item_id"}), 400
+        return jsonify({"message": "requiring either uid or iid"}), 400
 
     columns = ['id', 'user_id', 'book_id', 'ratings']
     query = select(Ratings.id, Ratings.user_id,

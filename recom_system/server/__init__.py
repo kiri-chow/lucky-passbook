@@ -48,18 +48,11 @@ def create_app():
 
         return jsonify({'id': user_id}), 200
 
-    @app.route('/api/recommend/<user_id>')
-    def get_recommendation(user_id):
-        "get recommendation list for the user"
-        # check recommender name
-        method = request.args.get('method')
-        if not method:
-            method = "default"
-
-        # TODO: implement the actual methods
-        return jsonify({"message": "API TBC"}), 500
 
     from . import ratings
     app.register_blueprint(ratings.bp, url_prefix='/api/ratings')
+
+    from . import books
+    app.register_blueprint(books.bp, url_prefix='/api/books')
 
     return app
