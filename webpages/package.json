@@ -9,11 +9,19 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@jamescoyle/vue-icon": "^0.1.2",
+    "@mdi/js": "^7.4.47",
+    "@oruga-ui/oruga-next": "^0.8.7",
+    "@oruga-ui/theme-oruga": "^0.2.2",
+    "@popperjs/core": "^2.11.8",
+    "bootstrap": "^5.3.3",
     "vue": "^3.4.21",
+    "vue-final-modal": "^4.5.4",
     "vue-router": "^4.3.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",
+    "sass": "^1.75.0",
     "vite": "^5.2.8"
   }
 }

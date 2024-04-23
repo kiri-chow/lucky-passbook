@@ -7,6 +7,7 @@ Created on Fri Apr 19 15:59:59 2024
 """
 import os
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from sqlalchemy import select, insert
 from recom_system.db import engine, Users
 
@@ -20,6 +21,7 @@ def create_app():
         static_url_path='/',
         static_folder=STATIC_PATH,
     )
+    CORS(app, supports_credentials=True)
 
     @app.route('/api/login', methods=['POST'])
     def login():
@@ -46,7 +48,7 @@ def create_app():
                 result = conn.execute(query)
             user_id = result.inserted_primary_key[0]
 
-        return jsonify({'id': user_id}), 200
+        return jsonify({'id': user_id, 'name': username}), 200
 
 
     from . import ratings

@@ -29,18 +29,19 @@ def get_books():
     # add search condition
     conditions = []
     keywords = request.args.get("keyword", "").lower()
-    slope = request.args.get("scope", "all").lower()
-    if slope == 'all':
-        slope = ['title', 'description']
+    scope = request.args.get("scope", "all").lower()
+    if scope == 'all':
+        scope = ['title', 'description']
     else:
-        slope = [slope]
+        scope = [scope]
     if keywords:
-        for key in slope:
+        for key in scope:
             conditions.append(getattr(Books, key).icontains(keywords))
 
     query = select(*[getattr(Books, name) for name in COLUMNS])
     count = select(func.count(Books.id))
     if conditions:
+        print(conditions)
         query = query.where(or_(*conditions))
         count = count.where(or_(*conditions))
     query = query.offset(offset).limit(per_page)
@@ -59,6 +60,20 @@ def get_books():
     }
 
     return jsonify(result), 200
+
+
+@bp.route('/<book_id>', methods=['GET'])
+def get_one_book(book_id):
+    "return a book's infomation"
+    book_id = int(book_id)
+    query = select(*[getattr(Books, name) for name in COLUMNS]
+                   ).where(Books.id == book_id)
+    with engine.begin() as conn:
+        try:
+            book = conn.execute(query).one()
+        except BaseException as err:
+            return jsonify({"message": err.args[0]}), 400
+    return jsonify(dict(zip(COLUMNS, book))), 200
 
 
 @bp.route('/recommend/<user_id>')
