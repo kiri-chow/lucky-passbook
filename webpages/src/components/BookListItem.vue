@@ -3,8 +3,8 @@
         <div class="book-list-header">
             <h4 class="book-list-title mb-0">{{ name }}</h4>
         </div>
-        <div class="book-list-content d-flex justify-content-start w-100">
-            <book-item v-for="book in books" :book="book" :small="true" @click="displayBook" />
+        <div :class="`w-100 justify-content-${large? 'around book-list-content-large' : 'start book-list-content d-flex'}`">
+            <book-item v-for="book in books" :book="book" :small="true" @click="displayBook" class="d-inline-block"/>
         </div>
         <div v-if="maxPage" class="mt-1 mb-2 d-flex justify-content-center">
             <nav aria-label="Page navigation example">
@@ -51,6 +51,10 @@ const props = defineProps({
             keyword: '',
         },
     },
+    large: {
+        type: Boolean,
+        default: false,
+    }
 });
 const page = ref(1);
 const perPage = ref(10);
@@ -97,6 +101,11 @@ function displayBook(event) {
 .page-link.disabled {
     background-color: rgba(0,0,0,0) !important;
     border:0;
+}
+
+.book-list-content-large {
+    overflow-x: hidden;
+    overflow-y: scroll;
 }
 
 .book-list-content {

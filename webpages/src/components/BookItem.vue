@@ -8,7 +8,10 @@ import { getUserRatings } from '@/assets/api';
 const user = inject('user');
 const userRatings = inject('userRatings');
 const props = defineProps({
-    book: Object,
+    book: {
+        type: Object,
+        default: {},
+    },
     small: {
         type: Boolean,
         default: true,
@@ -16,16 +19,28 @@ const props = defineProps({
 });
 const genres = computed(() =>
     props.book.popular_shelves ?
-        Object.entries(props.book.popular_shelves).sort((x, y) => x[1] > y[1] ? -1 : 1).slice(0, 5).map(
-            x => x[0]
-        ) : []
+        Object.entries(props.book.popular_shelves).sort((x, y) => x[1] > y[1] ? -1 : 1).slice(0, 5).map(z => z[0]): 
+        []
 );
-
-const title = computed(() => props.book.title ? props.book.title.slice(0, 30) + '...' : '');
+const imageUrl = computed(() => {
+    if (props.small) {
+        return props.book.image_url;
+    } else {
+        const path = props.book.image_url.split('/');
+        const ind = path.length - 2;
+        if (path[ind][path[ind].length - 1] === 'm') {
+            path[ind] = path[ind].slice(0, path[ind].length - 1) + 'i';
+        }
+        return path.join('/');
+    }
+});
+const title = computed(() => props.book.title ? (
+    props.book.title.length > 33 ? props.book.title.slice(0, 30) + '...' : props.book.title):
+    '');
 const description = computed(() => props.book.description.slice(0, 100) + '...');
 const emit = defineEmits(['updateRating']);
 const rating = computed(() => {
-    let value = {'rating': 0};
+    let value = { 'rating': 0 };
     for (let r of userRatings.value) {
         if (r.bookId === props.book.id) {
             value = r;
@@ -35,7 +50,7 @@ const rating = computed(() => {
     return value;
 });
 
-function updateUserRatings(data){
+function updateUserRatings(data) {
     for (let r of userRatings.value) {
         if (r.bookId === data.bookId) {
             r.rating = data.rating;
@@ -50,9 +65,9 @@ async function cancelRating() {
     }
     const rid = rating.value.id;
     const url = `/api/ratings/${rid}`;
-    const response = await fetch(url, {method: "DELETE"});
+    const response = await fetch(url, { method: "DELETE" });
     const json = await response.json();
-    if (!response.ok){
+    if (!response.ok) {
         alert(json.message);
     } else {
         userRatings.value = userRatings.value.filter(x => x.id != rid);
@@ -93,7 +108,7 @@ async function changeRating(event) {
             throw new Error(json.message);
         } else {
             body.id = json.id;
-            if (method === 'POST'){
+            if (method === 'POST') {
                 userRatings.value.push(body);
             } else {
                 updateUserRatings(body);
@@ -119,9 +134,10 @@ async function changeRating(event) {
     overflow-x: hidden;
 }
 
-.book-small .card-img-top {
-    max-height: 12rem;
-    width: fit-content;
+.book .card-img-top {
+    width:auto;
+    height:auto;
+    max-width: 20rem;
 }
 
 .book-small .card-title {
@@ -139,7 +155,7 @@ async function changeRating(event) {
 <template>
     <div :class="`book mx-2 my-2 p-0 pb-1 ${small ? 'book-small' : ''}`" :id="book.id">
         <div class="d-flex justify-content-center">
-            <img class="card-img-top" v-if="book.image_url" :src="book.image_url" alt="The book's image" />
+            <img class="card-img-top" v-if="book.image_url" :src="imageUrl" alt="The book's image" />
         </div>
         <div :class="`card-body p-${small ? '1' : '4'}`">
             <div class="d-flex justify-content-between">
@@ -153,16 +169,18 @@ async function changeRating(event) {
                     Published in {{ book.publication_year }}
                 </p>
             </section>
-            <section v-if="!(small & rating.rating === 0)" :class="`item-rating justify-content-between ${small? '' : 'd-flex'}`">
+            <section v-if="!(small & rating.rating === 0)"
+                :class="`item-rating justify-content-between flex-grow-1 ${small ? '' : 'd-flex'}`">
                 <div :class="`d-flex justify-content-${small ? 'evenly' : 'start'}`">
                     <a :href="`#${i + 1}`" v-for="i in Array(5).keys()" @click="changeRating">
                         <svg-icon type="mdi" class="item-rating-star"
-                            :path="i + 1 > rating.rating ? mdiStarOutline : mdiStar" color="orange" :size="small ? 16 : 24"/>
+                            :path="i + 1 > rating.rating ? mdiStarOutline : mdiStar" color="orange"
+                            :size="small ? 16 : 24" />
                     </a>
                 </div>
                 <a v-if="!small && rating.id" @click="cancelRating" role="button">
-                    <svg-icon type="mdi" class="item-rating-cancel"
-                        :path="mdiCloseCircleOutline" color="red" :size="small ? 16 : 24"/>
+                    <svg-icon type="mdi" class="item-rating-cancel" :path="mdiCloseCircleOutline" color="red"
+                        :size="small ? 16 : 24" />
                 </a>
             </section>
             <section>
