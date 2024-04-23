@@ -10,7 +10,7 @@ import sqlalchemy
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import (
     Column, Integer, String, Boolean, JSON, Text,
-    ForeignKey, UniqueConstraint
+    ForeignKey, UniqueConstraint, DateTime
 )
 
 
@@ -54,13 +54,19 @@ class Ratings(Base):
 
     id = Column(Integer, primary_key=True)
 
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey(
+        'users.id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
-    book_id = Column(Integer, ForeignKey('books.id'), nullable=False)
+    book_id = Column(Integer, ForeignKey(
+        'books.id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
     is_read = Column(Boolean, nullable=False, default=True)
 
     rating = Column(Integer, nullable=False)
+
+    created_at = Column(DateTime, nullable=False)
+
+    modified_at = Column(DateTime, nullable=False)
 
     __table_args__ = (
         UniqueConstraint('user_id', 'book_id', name='uid_bid'),

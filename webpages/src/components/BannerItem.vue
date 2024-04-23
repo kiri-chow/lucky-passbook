@@ -18,7 +18,7 @@ function logout(){
     <div class="navbar w-100 align-items-center d-flex justify-content-between">
         <div class="container-fluid">
             <h1 class="banner-title mx-2 my-0">{{ route.name }}</h1>
-            <div v-if="user" class="my-0 mx-2 d-flex justify-content-end">
+            <div v-if="user.name" class="my-0 mx-2 d-flex justify-content-end">
                 <p>Hello</p>
                 <div class="dropdown mx-2">
                     <a class="text-bold dropdown-toggle" aria-haspopup="true" aria-expanded="false" id="dropdown-toggle" data-bs-toggle="dropdown" role="button">

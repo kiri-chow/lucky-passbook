@@ -6,7 +6,7 @@ Created on Fri Apr 19 15:59:59 2024
 @author: anthony
 """
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect, url_for
 from flask_cors import CORS
 from sqlalchemy import select, insert
 from recom_system.db import engine, Users
@@ -22,6 +22,11 @@ def create_app():
         static_folder=STATIC_PATH,
     )
     CORS(app, supports_credentials=True)
+
+    @app.route('/')
+    def index():
+        return redirect('index.html')
+        
 
     @app.route('/api/login', methods=['POST'])
     def login():

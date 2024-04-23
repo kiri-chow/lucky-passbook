@@ -21,4 +21,5 @@ You can download the
 and put it into the `./instance` dir for developing or testing.
 
 ## Server
+
 Once you installed the project, you can run the command `flask --app recom_system.server run` for a dev server.

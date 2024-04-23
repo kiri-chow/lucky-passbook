@@ -5,6 +5,7 @@ Created on Sun Apr 21 23:48:33 2024
 
 @author: anthony
 """
+from datetime import datetime
 from flask import Blueprint, request, jsonify
 from sqlalchemy import select, insert, update, delete
 from recom_system.db import engine, Ratings
@@ -66,8 +67,10 @@ def create_ratings():
         return jsonify({"message": "requiring rating"}), 400
 
     # insert
+    now = datetime.now()
     query = insert(Ratings).values(
-        user_id=user_id, book_id=book_id, rating=rating)
+        user_id=user_id, book_id=book_id, rating=rating,
+        created_at=now, modified_at=now)
     try:
         with engine.begin() as conn:
             result = conn.execute(query)
@@ -89,7 +92,9 @@ def update_ratings(rid):
         return jsonify({"message": "requiring rating"}), 400
 
     # update
-    query = update(Ratings).where(Ratings.id == rid).values(rating=rating)
+    now = datetime.now()
+    query = update(Ratings).where(
+        Ratings.id == rid).values(rating=rating, modified_at=now)
     try:
         with engine.begin() as conn:
             result = conn.execute(query)
