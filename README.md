@@ -22,4 +22,4 @@ and put it into the `./instance` dir for developing or testing.
 
 ## Server
 
-Once you installed the project, you can run the command `flask --app recom_system.server run` for a dev server.
+Once you installed the project, you can run the command `flask --app recom_system.server run` for a dev server. And access http://localhost:5000 for the demo page.
