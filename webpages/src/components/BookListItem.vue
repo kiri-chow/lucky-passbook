@@ -53,7 +53,7 @@ const props = defineProps({
     },
 });
 const page = ref(1);
-const perPage = ref(20);
+const perPage = ref(10);
 const maxPage = ref(null);
 
 // read books
