@@ -6,6 +6,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      alias: ['/index.html', ],
       name: 'Lucky Pass Books',
       component: HomeView
     },
@@ -18,7 +19,7 @@ const router = createRouter({
       path: '/profile',
       name: 'Profile',
       component: () => import('../views/ProfileView.vue'),
-    }
+    },
   ]
 })
 

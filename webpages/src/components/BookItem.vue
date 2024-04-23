@@ -16,8 +16,8 @@ const props = defineProps({
 });
 const genres = computed(() =>
     props.book.popular_shelves ?
-        props.book.popular_shelves.sort((x, y) => x.count > y.count ? -1 : 1).slice(0, 5).map(
-            x => x.name
+        Object.entries(props.book.popular_shelves).sort((x, y) => x[1] > y[1] ? -1 : 1).slice(0, 5).map(
+            x => x[0]
         ) : []
 );
 
