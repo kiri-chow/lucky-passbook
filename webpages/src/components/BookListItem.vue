@@ -23,7 +23,7 @@
                     </li>
                         <!-- last page -->
                         <li v-if="page < maxPage - 3" class="page-link disabled" disabled>...</li>
-                        <li :class="`page-item ${page === maxPage ? 'active' : ''}` ">
+                        <li v-if="1 !== maxPage" :class="`page-item ${page === maxPage ? 'active' : ''}` ">
                             <a class="page-link" role="button" @click="changePage">
                                 {{ maxPage }}
                             </a>
