@@ -26,10 +26,14 @@ class BaseModel(AlgoBase):
         if isnan(user_id):
             return [self.default_prediction() for _ in item_idx]
 
-        return np.asarray([
-            (self.default_prediction() if isnan(iid)
-             else self.estimate(user_id, iid))
-            for iid in item_idx])
+        results = []
+        for iid in item_idx:
+            try:
+                pred = self.estimate(user_id, iid)
+            except PredictionImpossible:
+                pred = self.default_prediction()
+            results.append(pred)
+        return np.asarray(results)
 
     def __base_conv_id(self, func, x):
         if isinstance(x, Iterable):

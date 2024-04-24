@@ -69,7 +69,11 @@ class DictBasedModel(BaseModel):
                     user_profile[key] = (user_profile.get(key, 0) +
                                          value * rating)
 
-        # record the user profile
+        # normalization
+        l1_norm = sum(user_profile.values())
+        if l1_norm > 0:
+            for key, value in user_profile.items():
+                user_profile[key] = value / l1_norm
         self.user_profiles[user_id] = user_profile
         return user_profile
 

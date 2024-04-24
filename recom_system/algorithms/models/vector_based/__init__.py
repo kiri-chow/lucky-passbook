@@ -67,7 +67,10 @@ class VectorBasedModel(BaseModel):
         item_profiles = self._get_item_profile(index)
         user_profile = ratings.dot(item_profiles)
 
-        # record user profile
+        # normalization
+        l1_norm = sum(user_profile)
+        if l1_norm > 0:
+            user_profile /= l1_norm
         self.user_profiles[user_id] = user_profile
         return user_profile
 
