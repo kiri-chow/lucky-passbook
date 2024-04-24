@@ -37,8 +37,7 @@ def evaluate(algo, testset, measures=['rmse']):
             iidx = algo.to_inner_iid(items)
             y_pred = algo.estimate_batch(uid, iidx)
             for name in measures:
-                results[name].append(
-                    NAME_TO_FUNC.get(name, name)(y_true, y_pred))
+                results[name].append(_get_metric(name)(y_true, y_pred))
     else:
         for row in testset:
             user, item, y_true = row[:3]
@@ -49,8 +48,7 @@ def evaluate(algo, testset, measures=['rmse']):
             else:
                 y_pred = algo.estimate(uid, iid)
             for name in measures:
-                results[name].append(
-                    NAME_TO_FUNC.get(name, name)(y_true, y_pred))
+                results[name].append(_get_metric(name)(y_true, y_pred))
 
     # compute the mean for all records
     mean_results = {}
@@ -63,21 +61,27 @@ def evaluate(algo, testset, measures=['rmse']):
     return mean_results
 
 
-def se(y_true, y_pred):
+def se(y_true, y_pred, *args, **kwargs):
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+
     return ((y_true - y_pred)**2).sum()
 
 
-def rmse(y_true, y_pred):
+def rmse(y_true, y_pred, *args, **kwargs):
     '''
     returns
     -------
     rmse : float
 
     '''
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+
     return ((y_true - y_pred)**2).mean()**0.5
 
 
-def ndcg(y_true, y_pred, threshold=0):
+def ndcg(y_true, y_pred, *args, n=10, threshold=0, **kwargs):
     """
     params
     ------
@@ -85,12 +89,17 @@ def ndcg(y_true, y_pred, threshold=0):
         0 : compute nDCG with true ratings;
         other value : the threshold to determine a item hit the user or not.
 
-    ndcg : float
+    returns
+    -------
+    ndcg@n : float
 
     """
-    ord_true = np.argsort(-y_true)
-    ord_pred = np.argsort(-y_pred)
-    decays = np.log2(np.arange(len(y_true)) + 2)
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+
+    ord_true = np.argsort(-y_true)[:n]
+    ord_pred = np.argsort(-y_pred)[:n]
+    decays = np.log2(np.arange(min(len(y_true), n)) + 2)
 
     if threshold:
         dcg = (y_true[ord_pred] > threshold / decays).sum()
@@ -101,23 +110,51 @@ def ndcg(y_true, y_pred, threshold=0):
     return dcg / (idcg + 1e-10)
 
 
-def precision_recall(y_true, y_pred, n=10, threshold=3):
+def precision(y_true, y_pred, *args, n=10, threshold=3, **kwargs):
     '''
     returns
     -------
     precision@n, recall@n : float
 
     '''
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+
     index = np.argsort(-y_pred)[:n]
     n_hits = (y_true[index] > threshold).sum()
     precision = n_hits / min(n, len(index) + 1e-10)
+    return precision
+
+
+def recall(y_true, y_pred, *args, n=10, threshold=3, **kwargs):
+    '''
+    returns
+    -------
+    precision@n, recall@n : float
+
+    '''
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+
+    index = np.argsort(-y_pred)[:n]
+    n_hits = (y_true[index] > threshold).sum()
     recall = n_hits / ((y_true > threshold).sum() + 1e-10)
-    return precision, recall
+    return recall
+
+
+def _get_metric(name):
+    try:
+        name, n = name.split('@')
+        n = int(n)
+    except ValueError:
+        n = 10  # default
+    func = NAME_TO_FUNC.get(name, name)
+    return lambda *x: func(*x, n=n)
 
 
 NAME_TO_FUNC = {
     'rmse': se,
     'ndcg': ndcg,
-    'precision': lambda *x: precision_recall(*x)[0],
-    'recall': lambda *x: precision_recall(*x)[1],
+    'precision': precision,
+    'recall': recall,
 }

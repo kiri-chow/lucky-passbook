@@ -24,7 +24,7 @@ class DictBasedModel(BaseModel):
 
     """
 
-    def __init__(self, item_profiles, threshold, fit_and_build=False):
+    def __init__(self, item_profiles, threshold=3, fit_and_build=False):
         super().__init__()
         self.item_profiles = item_profiles
         self.threshold = threshold
@@ -35,7 +35,7 @@ class DictBasedModel(BaseModel):
         super().fit(trainset)
 
         # build user profile
-        self.user_profiles.clean()
+        self.user_profiles.clear()
         if self.fit_and_build:
             for user_id in range(self.trainset.n_users):
                 try:
@@ -59,30 +59,32 @@ class DictBasedModel(BaseModel):
         except KeyError:
             raise PredictionImpossible("Unknown user")
         for item_id, rating in user_ratings:
-            if rating <= self.threshold:
-                continue
-            try:
-                item_profile = self._get_item_profile(item_id)
-            except PredictionImpossible:
-                continue
-            for key, value in item_profile:
-                user_profile[key] = (user_profile.get(key, 0) +
-                                     value * rating)
+            # only consider positive items
+            if rating > self.threshold:
+                try:
+                    item_profile = self._get_item_profile(item_id)
+                except PredictionImpossible:
+                    continue
+                for key, value in item_profile.items():
+                    user_profile[key] = (user_profile.get(key, 0) +
+                                         value * rating)
+
+        # record the user profile
         self.user_profiles[user_id] = user_profile
         return user_profile
 
-    def _get_item_profile(self, riid):
-        iid = self.to_raw_iid(riid)
-        if isnan(iid):
+    def _get_item_profile(self, iid):
+        riid = self.to_raw_iid(iid)
+        if isnan(riid):
             raise PredictionImpossible("Unknown item")
-        return self.item_profiles[iid]
+        return self.item_profiles[riid]
 
     def estimate(self, user_id, item_id):
         user_profile = self._get_user_profile(user_id)
         item_profile = self._get_item_profile(item_id)
 
         score = 0
-        for key, weight in user_profile:
+        for key, weight in user_profile.items():
             score += item_profile.get(key, 0) * weight
         return score
 
