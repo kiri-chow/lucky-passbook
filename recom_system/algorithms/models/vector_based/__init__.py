@@ -9,9 +9,9 @@ from surprise import AlgoBase, PredictionImpossible
 import numpy as np
 
 
-class ContentBasedModel(AlgoBase):
+class VectorBasedModel(AlgoBase):
     """
-    content baed model
+    Content based model for vector-like data
 
     params
     ------
