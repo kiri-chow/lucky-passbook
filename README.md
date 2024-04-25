@@ -16,10 +16,9 @@ poetry install
 ```
 
 ## Test Data
-You can download the
-[cleaned database](https://drive.google.com/file/d/1k-IeJkeRWoQQ1VtD71pfqNm9ewxGTCxS/view?usp=drive_link)
-and put it into the `./instance` dir for developing or testing.
+For testing, you can download the
+[instance.zip](https://drive.google.com/file/d/1pGdfsKB98GEqCJV5aWuHBQlO2X27nThf/view?usp=drive_link)
+then unzip and put it as the `./instance` folder for developing or testing.
 
 ## Server
-
 Once you installed the project, you can run the command `flask --app recom_system.server run` for a dev server. And access http://localhost:5000 for the demo page.

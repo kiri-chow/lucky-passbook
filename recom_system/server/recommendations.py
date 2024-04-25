@@ -67,6 +67,44 @@ def update_user_profile():
 update_user_profile()
 
 
+def cold_start_vector(sent, user_id):
+    "create vector for new user"
+    vector = LLM.encode([sent])[0]
+    with engine.begin() as conn:
+        vector = vector.tolist()
+        result = conn.execute(
+            update(Users).where(Users.id == user_id).values(vector=vector))
+        return result.rowcount
+
+
+def recom_by_user_profile(user_id):
+    with engine.begin() as conn:
+        user = conn.execute(
+            select(Users.vector).where(Users.id == user_id)
+        ).one()[0]
+
+    if user is None:
+        return []
+    else:
+        user = np.array(user)
+
+    books_matrix = BOOKS_MATRIX
+    book_idx = BOOKS_INDEX
+
+    # return top 20 results
+    cosine = user.dot(books_matrix.T)
+    index = np.argsort(cosine)[::-1][:20]
+    book_idx = book_idx[index].tolist()
+
+    books = _get_books_by_idx(book_idx)
+
+    # add confidence
+    cosine = cosine[index].tolist()
+    for cos, book in zip(cosine, books):
+        book['conf'] = f'{cos:.0%}'
+    return books
+
+
 def recom_by_last_like(user_id):
     # get user last rating
     with engine.begin() as conn:
@@ -79,7 +117,7 @@ def recom_by_last_like(user_id):
             )).order_by(Ratings.modified_at.desc())
         ).all()
 
-    if rated is None:
+    if not rated:
         return []
 
     rated = [x[0] for x in rated]

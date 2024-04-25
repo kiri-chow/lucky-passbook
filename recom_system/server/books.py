@@ -13,7 +13,7 @@ from recom_system.db import engine, Books, Ratings, get_columns
 from recom_system.server.recommendations import (
     _get_book_ratings, _merge_books_ratings, 
     search_by_recom, recom_by_svd_ncf, recom_by_knn_content,
-    recom_by_last_like,
+    recom_by_last_like, recom_by_user_profile,
 )
 
 
@@ -94,6 +94,8 @@ def get_recommendation(user_id):
             books = recom_by_knn_content(user_id)
         elif method == 'last_like':
             books = recom_by_last_like(user_id)
+        elif method == 'cold_start':
+            books = recom_by_user_profile(user_id)
         else:
             raise ValueError("Recommendation TBC")
     except BaseException as err:
