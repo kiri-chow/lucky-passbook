@@ -30,7 +30,8 @@ class KNNViaContent(BaseModel):
 
     """
 
-    def __init__(self, item_matrix, k=50, min_k=3, threshold=3, norm=2):
+    def __init__(self, item_matrix, k=50, min_k=3, threshold=3, norm=2,
+                 user_profile=None):
         super().__init__()
         self.item_matrix = item_matrix
         self.k = k
@@ -52,10 +53,36 @@ class KNNViaContent(BaseModel):
 
         return self
 
+    def estimate_by_ratings(self, user_ratings, item_idx):
+        "return estimate result by real time ratings"
+        user_ratings = np.asarray(user_ratings)
+        user_profile = self.__base_build_user_profile(user_ratings)
+
+        # get neighbors
+        _, neighbors = self.tree_.query(
+            user_profile.reshape(1, -1), self.k + 1)
+        neighbors = neighbors[0]
+
+        # user mean
+        user_mean = np.mean(user_ratings[:, 1])
+
+        preds = []
+        for iid in item_idx:
+            try:
+                pred = self.__base_estimate(
+                    iid, user_profile, neighbors, user_mean)
+            except PredictionImpossible:
+                pred = 0
+            preds.append(pred)
+        return preds
+
     def estimate(self, user_id, item_id):
         # get k neighbors
         user_profile, neighbors = self.__get_neighbors(user_id)
+        user_mean = self.__get_user_mean(user_id)
+        return self.__base_estimate(item_id, user_profile, neighbors, user_mean)
 
+    def __base_estimate(self, item_id, user_profile, neighbors, user_mean):
         # filter neighbors by item
         item_ratings = dict(self.trainset.ir[item_id])
         actual_neighbors = list(set(item_ratings) & set(neighbors))
@@ -68,7 +95,6 @@ class KNNViaContent(BaseModel):
             item_ratings[uid] - self.__get_user_mean(uid)
             for uid in actual_neighbors])
         sum_sim = np.abs(cosines).sum() + 1e-10
-        user_mean = self.__get_user_mean(user_id)
 
         pred = user_mean + cosines.dot(delta_ratings) / sum_sim
         return pred
@@ -90,7 +116,9 @@ class KNNViaContent(BaseModel):
 
     def _build_user_profile(self, user_id):
         user_ratings = np.asarray(self.trainset.ur[user_id])
+        return self.__base_build_user_profile(user_ratings)
 
+    def __base_build_user_profile(self, user_ratings):
         # only consider the positive items
         user_ratings = user_ratings[user_ratings[:, 1] > self.threshold]
         index, ratings = user_ratings.T

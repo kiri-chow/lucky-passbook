@@ -43,6 +43,8 @@ class Users(Base):
 
     name = Column(String)
 
+    vector = Column(JSON)
+
     def __repr__(self):
         return f'<User(name={self.name})>'
 

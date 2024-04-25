@@ -4,7 +4,7 @@ import { VueFinalModal } from 'vue-final-modal'
 import BookItem from './BookItem.vue';
 
 
-const emit = defineEmits(['leave']);
+const emit = defineEmits(['leave', 'dislikeItem']);
 const props = defineProps({
     book: {
         type: Object,
@@ -15,6 +15,7 @@ const props = defineProps({
         default: [],
     }
 })
+
 </script>
 <style>
 .book-details-modal {
@@ -24,7 +25,7 @@ const props = defineProps({
 }
 
 .book-details {
-    max-width: 20rem;
+    max-width: 30rem;
     display: flex;
     flex-direction: column;
 }

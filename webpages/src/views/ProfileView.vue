@@ -22,7 +22,6 @@ function displayBook(val) {
   const { open, close } = useModal({
     component: BookDetailsItem,
     attrs: {
-      title: "test",
       book: theBook.value,
       userRatings: userRatings.value,
       onConfirm() {
@@ -35,7 +34,7 @@ function displayBook(val) {
 </script>
 <template>
   <main>
-    <BookListItem name="Liked Books" :userRatings="userRatings" @displayBook="displayBook" :large="false"/>
+    <BookListItem name="Rated Books" type='profile' :userRatings="userRatings" @displayBook="displayBook" :large="false"/>
     <!-- <BookListItem name="List 2" :userId="1"/>
     <BookListItem name="List 3" :userId="1"/> -->
   </main>

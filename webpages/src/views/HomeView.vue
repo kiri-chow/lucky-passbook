@@ -18,7 +18,6 @@ function displayBook(val) {
   const { open, close } = useModal({
     component: BookDetailsItem,
     attrs: {
-      title: "test",
       book: theBook.value,
       userRatings: userRatings.value,
       onConfirm() {
@@ -28,12 +27,13 @@ function displayBook(val) {
   });
   open();
 }
+
 </script>
 <template>
   <main>
     <SearchItem @displayBook="displayBook"/>
-    <BookListItem name="Profile" :userRatings="userRatings" @displayBook="displayBook" />
-    <!-- <BookListItem name="List 2" :userId="1"/>
-    <BookListItem name="List 3" :userId="1"/> -->
+    <BookListItem name="Our best guess" type="svd_ncf" :userRatings="userRatings" @displayBook="displayBook" />
+    <BookListItem name="Similar reader choices" type="knn_content" :userRatings="userRatings" @displayBook="displayBook" />
+    <BookListItem name="Similar with your last choice" type="last_like" :userRatings="userRatings" @displayBook="displayBook" />
   </main>
 </template>

@@ -12,10 +12,9 @@ from surprise import SVD
 import numpy as np
 import torch
 from torch import nn
-from torch.utils.data import DataLoader
+from torch.utils.data import Dataset, DataLoader
 from recom_system.algorithms.models.base import BaseModel
-from recom_system.algorithms.models.nn.ncf import (
-    NCFModel, NCFClf, NCFDataset, NCFClfDataset, train_model as train_ncf)
+from recom_system.algorithms.models.nn.ncf import NcfModel, train_model
 
 
 class SvdNCF(BaseModel):
@@ -23,21 +22,21 @@ class SvdNCF(BaseModel):
     A combination of SVD and NCF Model
 
     """
-    ncf_clazz = NCFModel
-
-    data_clazz = NCFDataset
 
     def __init__(self, svd_params=None, ncf_params=None, fit_and_train=False,
-                 biased=True):
+                 biased=True, verbose=True, n_epochs=10):
         super().__init__()
         if not svd_params:
-            svd_params = {}
+            svd_params = {"n_factors": 10, "n_epochs": 20}
         svd_params["biased"] = biased
         self.svd = SVD(**svd_params)
         if not ncf_params:
             ncf_params = {}
-        self.ncf = self.ncf_clazz(**ncf_params)
+        ncf_params['in_features'] = self.svd.n_factors * 2
+        self.ncf = NcfModel(**ncf_params)
 
+        self.verbose = verbose
+        self.n_epochs = n_epochs
         self.fit_and_train = fit_and_train
 
     def save(self, path):
@@ -74,7 +73,7 @@ class SvdNCF(BaseModel):
         if self.fit_and_train:
             self.train(
                 torch.optim.Adam(self.ncf.parameters(), 1e-3),
-                nn.MSELoss(), epochs=5,
+                nn.MSELoss(), epochs=self.n_epochs,
             )
 
         return self
@@ -117,8 +116,8 @@ class SvdNCF(BaseModel):
         trainloader = DataLoader(trainset, shuffle=True, batch_size=batch_size)
         testloader = DataLoader(testset, shuffle=False, batch_size=batch_size)
 
-        return train_ncf(self.ncf, trainloader, testloader, optimizer,
-                         loss_func=loss_func, epochs=epochs)
+        return train_model(self.ncf, trainloader, testloader, optimizer,
+                           loss_func=loss_func, epochs=epochs)
 
     def _build_dataset(self, train_size=0.8):
         index = list(range(self.trainset.n_ratings))
@@ -129,8 +128,8 @@ class SvdNCF(BaseModel):
         traindata = data[index[: cut]]
         testdata = data[index[cut:]]
 
-        trainset = self.data_clazz(traindata, self.svd)
-        testset = self.data_clazz(testdata, self.svd)
+        trainset = SvdNcfDataset(traindata, self.svd)
+        testset = SvdNcfDataset(testdata, self.svd)
         return trainset, testset
 
     def __build_feature(self, uid, iid):
@@ -156,21 +155,31 @@ class SvdNCF(BaseModel):
         return feat, bias
 
 
-class SvdNCFClf(SvdNCF):
-    "The classification variant of SVD NCF Model"
+class SvdNcfDataset(Dataset):
+    """
+    Dataset for SVD-NCF Model
 
-    ncf_clazz = NCFClf
+    """
 
-    data_clazz = NCFClfDataset
+    def __init__(self, data, svd, biased=True):
+        self.data = data
+        self.svd = svd
+        self.biased = biased
 
-    def estimate(self, user_id, item_id):
-        pred = super().estimate(user_id, item_id)
+    def __len__(self):
+        return len(self.data)
 
-        lower, upper = self.trainset.rating_scale
-        return pred * (upper - lower) + lower
+    def __getitem__(self, idx):
+        uid, iid, label = self.data[idx]
+        uid = int(uid)
+        iid = int(iid)
+        user = self.svd.pu[uid]
+        item = self.svd.qi[iid]
 
-    def estimate_batch(self, user_id, item_idx):
-        preds = super().estimate_batch(user_id, item_idx)
+        feat = np.concatenate([user, item])
 
-        lower, upper = self.trainset.rating_scale
-        return preds * (upper - lower) + lower
+        if self.biased:
+            mju = self.svd.trainset.global_mean
+            label = label - self.svd.bi[iid] - self.svd.bu[uid] - mju
+
+        return torch.Tensor(feat), torch.Tensor([label])

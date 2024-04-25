@@ -7,7 +7,7 @@ Created on Sun Apr 21 00:13:23 2024
 """
 from collections.abc import Iterable
 import pandas as pd
-from sqlalchemy import select
+from sqlalchemy import select, func
 from recom_system.db import Ratings, Books, Users, engine
 
 
@@ -52,3 +52,19 @@ def get_users(uidx=None):
     with engine.begin() as con:
         df = pd.read_sql(query, con)
     return df
+
+
+def get_books_by_rank(bidx=None):
+    query = select(Ratings.book_id, func.sum(
+        Ratings.rating), func.count(Ratings.rating))
+    if bidx is not None:
+        if isinstance(bidx, Iterable):
+            query = query.where(Books.id.in_(bidx))
+        else:
+            query = query.where(Books.id == bidx)
+    query = query.group_by(Ratings.book_id)
+
+    with engine.begin() as con:
+        result = con.execute(query).all()
+    books = sorted(result, key=lambda x: (x[1] / x[2] > 3, x[2]), reverse=True)
+    return list(map(lambda x: x[0], books))

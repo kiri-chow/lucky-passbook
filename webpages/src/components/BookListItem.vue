@@ -1,53 +1,62 @@
 <template>
     <div v-show="books.length" class="book-list mt-2 mb-1">
-        <div class="book-list-header">
+        <div class="book-list-header d-flex align-items-center">
             <h4 class="book-list-title mb-0">{{ name }}</h4>
+            <a @click="refreshBookList" role="button" v-if="!pending">
+                <svg-icon class="refresh-icon" type="mdi" :path="mdiRefresh" :size="28" />
+            </a>
+            <div class="loader refresh-icon" v-else />
         </div>
-        <div :class="`w-100 justify-content-${large? 'around book-list-content-large' : 'start book-list-content d-flex'}`">
-            <book-item v-for="book in books" :book="book" :small="true" @click="displayBook" class="d-inline-block"/>
+        <div
+            :class="`w-100 justify-content-${large ? 'around book-list-content-large' : 'start book-list-content d-flex'}`">
+            <book-item v-for="book in books" :book="book" :small="true" @click="displayBook" class="d-inline-block" />
         </div>
         <div v-if="maxPage" class="mt-1 mb-2 d-flex justify-content-center">
             <nav aria-label="Page navigation example">
                 <ul class="pagination">
-                        <li :class="`page-item ${page === 1 ? 'active' : ''}`">
-                            <a class="page-link" role="button" @click="changePage">
-                                1
-                            </a>
-                        </li>
-                        <li v-if="page > 4" class="page-link disabled" disabled>...</li>
+                    <li :class="`page-item ${page === 1 ? 'active' : ''}`">
+                        <a class="page-link" role="button" @click="changePage">
+                            1
+                        </a>
+                    </li>
+                    <li v-if="page > 4" class="page-link disabled" disabled>...</li>
                     <li v-for="ind in Array(5).keys()" :class="`page-item ${ind === 2 ? 'active' : ''}`">
                         <a class="page-link" role="button" v-if="1 < page - 2 + ind && page - 2 + ind < maxPage"
                             @click="changePage">
                             {{ page - 2 + ind }}
                         </a>
                     </li>
-                        <!-- last page -->
-                        <li v-if="page < maxPage - 3" class="page-link disabled" disabled>...</li>
-                        <li v-if="1 !== maxPage" :class="`page-item ${page === maxPage ? 'active' : ''}` ">
-                            <a class="page-link" role="button" @click="changePage">
-                                {{ maxPage }}
-                            </a>
-                        </li>
+                    <!-- last page -->
+                    <li v-if="page < maxPage - 3" class="page-link disabled" disabled>...</li>
+                    <li v-if="1 !== maxPage" :class="`page-item ${page === maxPage ? 'active' : ''}`">
+                        <a class="page-link" role="button" @click="changePage">
+                            {{ maxPage }}
+                        </a>
+                    </li>
                 </ul>
             </nav>
         </div>
     </div>
 </template>
 <script setup>
+import SvgIcon from '@jamescoyle/vue-icon';
 import { ref, onMounted, watch, inject } from 'vue';
-import { getBooksByRatings, getBooksBySearch } from '@/assets/api';
-import { mdiChevronLeft, mdiChevronRight } from '@mdi/js';
+import { getBooksByRatings, getBooksBySearch, getBooksByRecommendation } from '@/assets/api';
+import { mdiRefresh } from '@mdi/js';
 import BookItem from './BookItem.vue';
 
 
+const user = inject('user');
 const userRatings = inject('userRatings');
 const emit = defineEmits(['displayBook']);
 const props = defineProps({
     name: String,
+    type: String,
     search: {
         type: Object,
         default: {
             scope: 'all',
+            sortedBy: 'date',
             keyword: '',
         },
     },
@@ -69,16 +78,34 @@ async function changePage(event) {
     updateBookList(props);
 }
 
+
+const pending = ref(false);
+async function refreshBookList() {
+    if (!pending.value) updateBookList(props);
+}
+
 async function updateBookList(data) {
     const name = data.name.toLowerCase();
-    if (name === 'liked books') {
+    if (data.type === 'profile') {
         books.value = await getBooksByRatings(userRatings.value);
-    } else if (name === 'search result' && data.search.keyword) {
-        let result = await getBooksBySearch(data.search, page.value, perPage.value);
-        page.value = result.page;
-        perPage.value = result.perPage;
-        maxPage.value = Math.ceil(result.total / perPage.value);
-        books.value = result.data;
+    } else if (data.type === 'search') {
+        if (data.search.keyword) {
+            let result = await getBooksBySearch(data.search, user.value.id, page.value, perPage.value);
+            page.value = result.page;
+            perPage.value = result.perPage;
+            maxPage.value = Math.ceil(result.total / perPage.value);
+            books.value = result.data;
+        }
+    } else {
+        pending.value = true;
+        try {
+            books.value = await getBooksByRecommendation(user.value.id, data.type);
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            pending.value = false;
+        }
+
     }
 }
 
@@ -98,9 +125,43 @@ function displayBook(event) {
 }
 </script>
 <style>
+.refresh-icon {
+    color: var(--blue);
+    margin-left: 0.5rem;
+}
+
+
+.loader {
+    width: 20px;
+    padding: 3px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #25b09b;
+    --_m:
+        conic-gradient(#0000 10%, #000),
+        linear-gradient(#000 0 0) content-box;
+    -webkit-mask: var(--_m);
+    mask: var(--_m);
+    -webkit-mask-composite: source-out;
+    mask-composite: subtract;
+    animation: l3 1s infinite linear;
+}
+
+@keyframes l3 {
+    to {
+        transform: rotate(1turn)
+    }
+}
+
+@keyframes l1 {
+    to {
+        transform: rotate(.5turn)
+    }
+}
+
 .page-link.disabled {
-    background-color: rgba(0,0,0,0) !important;
-    border:0;
+    background-color: rgba(0, 0, 0, 0) !important;
+    border: 0;
 }
 
 .book-list-content-large {
@@ -136,5 +197,4 @@ function displayBook(event) {
 /* Handle on hover */
 .book-list-content::-webkit-scrollbar-thumb:hover {
     background: #555;
-}
-</style>
+}</style>

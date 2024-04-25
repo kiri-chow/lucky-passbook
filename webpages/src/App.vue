@@ -24,7 +24,7 @@ onMounted(async () => {
   <header class="position-sticky top-0">
     <BannerItem />
   </header>
-  <div class="p-4">
+  <div class="app-content p-4">
     <ModalsContainer />
     <RouterView />
   </div>

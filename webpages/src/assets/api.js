@@ -21,10 +21,23 @@ export async function getBooksByRatings(ratings) {
     return books;
 }
 
-export async function getBooksBySearch(search, page = 1, perPage = 20) {
+export async function getBooksByRecommendation(user_id, method) {
+    const response = await fetch(`/api/books/recommend/${user_id}?method=${method}`);
+    const json = await response.json();
+    if (response.ok) {
+        return json;
+    } else {
+        console.error(json.message);
+        return [];
+    }
+}
+
+export async function getBooksBySearch(search, userId, page = 1, perPage = 20) {
     const params = [
+        `userId=${userId}`,
         `keyword=${search.keyword}`,
         `scope=${search.scope}`,
+        `sortedBy=${search.sortedBy}`,
         `page=${page}`,
         `perPage=${perPage}`
     ];

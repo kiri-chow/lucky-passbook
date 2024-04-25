@@ -13,7 +13,7 @@ from torch.utils.data import Dataset
 from torch.utils.tensorboard import SummaryWriter
 
 
-class NCFModel(nn.Module):
+class NcfModel(nn.Module):
     """
     The Neural CF model
 
@@ -27,7 +27,7 @@ class NCFModel(nn.Module):
             mlp_layers.append(MLPLayer(in_f, out_f, short_cut=True))
         self.mlp = nn.Sequential(*mlp_layers)
         self.gmf = nn.Linear(in_features, mlp_size[-1])
-        self.final = nn.Linear(mlp_size[-1] * 2, 1)
+        self.final = nn.Linear(mlp_size[-1] * 2, out_features)
         self.last = nn.ReLU()
 
     def forward(self, x):
@@ -37,58 +37,6 @@ class NCFModel(nn.Module):
         y = self.final(y)
         y = self.last(y)
         return y
-
-
-class NCFDataset(Dataset):
-    """
-    Dataset for NCF Model
-
-    """
-
-    def __init__(self, data, svd, biased=True):
-        self.data = data
-        self.svd = svd
-        self.biased = biased
-
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, idx):
-        uid, iid, label = self.data[idx]
-        uid = int(uid)
-        iid = int(iid)
-        user = self.svd.pu[uid]
-        item = self.svd.qi[iid]
-
-        feat = np.concatenate([user, item])
-
-        if self.biased:
-            mju = self.svd.trainset.global_mean
-            label = label - self.svd.bi[iid] - self.svd.bu[uid] - mju
-
-        return torch.Tensor(feat), torch.Tensor([label])
-
-
-class NCFClf(NCFModel):
-    """
-    The classification variant of NCF Model
-
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.last = nn.Sigmoid()
-
-
-class NCFClfDataset(NCFDataset):
-    def __init__(self, data, svd, biased=False, threshold=3):
-        super().__init__(data, svd, biased=False)
-        self.threshold = threshold
-
-    def __getitem__(self, idx):
-        feat, label = super().__getitem__(idx)
-        label = (label > self.threshold).float()
-        return feat, label
 
 
 class MLPLayer(nn.Module):
@@ -114,13 +62,14 @@ class MLPLayer(nn.Module):
 
 
 def train_model(model, train_loader, test_loader, optimizer, loss_func,
-                epochs=20, log_name='svd_nn'):
+                epochs=20, log_name='svd_nn', verbose=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     writer = SummaryWriter()
     losses = []
     for epoch in range(epochs):
         train_loss = train_once(
-            model, tqdm(train_loader, f'{epoch+1}/{epochs}'),
+            model, (tqdm(train_loader, f'{epoch+1}/{epochs}')
+                    if verbose else train_loader),
             optimizer, loss_func, device)
         test_loss = test_once(model, test_loader, loss_func, device)
         writer.add_scalars(log_name, {'training': train_loss,

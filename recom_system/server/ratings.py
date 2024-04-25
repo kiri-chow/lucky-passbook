@@ -26,8 +26,9 @@ def get_ratings():
         return jsonify({"message": "requiring either userId or bookId"}), 400
 
     
-    query = select(Ratings.id, Ratings.user_id,
-                   Ratings.book_id, Ratings.rating)
+    query = select(
+        Ratings.id, Ratings.user_id, Ratings.book_id, Ratings.rating
+    ).order_by(Ratings.modified_at.desc())
     if user_id is not None:
         query = query.where(Ratings.user_id == user_id)
     if item_id is not None:
