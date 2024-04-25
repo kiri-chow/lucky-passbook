@@ -18,21 +18,81 @@ from torch.utils.tensorboard import SummaryWriter
 from recom_system.algorithms.models.base import BaseModel
 
 
+class NCFModel(nn.Module):
+    """
+    The Neural CF model
+
+    """
+
+    def __init__(self, in_features=20, out_features=1,
+                 mlp_size=(30, 30, 10)):
+        super().__init__()
+        mlp_layers = [MLPLayer(in_features, mlp_size[0], short_cut=False)]
+        for in_f, out_f in zip(mlp_size[:-1], mlp_size[1:]):
+            mlp_layers.append(MLPLayer(in_f, out_f, short_cut=True))
+        self.mlp = nn.Sequential(*mlp_layers)
+        self.gmf = nn.Linear(in_features, mlp_size[-1])
+        self.final = nn.Linear(mlp_size[-1] * 2, 1)
+        self.last = nn.ReLU()
+
+    def forward(self, x):
+        y1 = self.mlp(x)
+        y2 = self.gmf(x)
+        y = torch.cat([y1, y2], dim=1)
+        y = self.final(y)
+        y = self.last(y)
+        return y
+
+
+class NCFDataset(Dataset):
+    """
+    Dataset for NCF Model
+
+    """
+
+    def __init__(self, data, svd, biased=True):
+        self.data = data
+        self.svd = svd
+        self.biased = biased
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        uid, iid, label = self.data[idx]
+        uid = int(uid)
+        iid = int(iid)
+        user = self.svd.pu[uid]
+        item = self.svd.qi[iid]
+
+        feat = np.concatenate([user, item])
+
+        if self.biased:
+            mju = self.svd.trainset.global_mean
+            label = label - self.svd.bi[iid] - self.svd.bu[uid] - mju
+
+        return torch.Tensor(feat), torch.Tensor([label])
+
+
 class SvdNCF(BaseModel):
     """
     A combination of SVD and NCF Model
 
     """
+    ncf_clazz = NCFModel
 
-    def __init__(self, svd_params=None, ncf_params=None, fit_and_train=False):
+    data_clazz = NCFDataset
+
+    def __init__(self, svd_params=None, ncf_params=None, fit_and_train=False,
+                 biased=True):
         super().__init__()
         if not svd_params:
             svd_params = {}
+        svd_params["biased"] = biased
         self.svd = SVD(**svd_params)
         if not ncf_params:
             ncf_params = {}
-        # self.ncf_params = ncf_params
-        self.ncf = NCFModel(**ncf_params)
+        self.ncf = self.ncf_clazz(**ncf_params)
 
         self.fit_and_train = fit_and_train
 
@@ -68,10 +128,9 @@ class SvdNCF(BaseModel):
         self.svd.fit(trainset)
 
         if self.fit_and_train:
-            # self.ncf = NCFModel(**self.ncf_params)
             self.train(
                 torch.optim.Adam(self.ncf.parameters(), 1e-3),
-                nn.MSELoss(),
+                nn.MSELoss(), epochs=5,
             )
 
         return self
@@ -126,8 +185,8 @@ class SvdNCF(BaseModel):
         traindata = data[index[: cut]]
         testdata = data[index[cut:]]
 
-        trainset = NCFDataset(traindata, self.svd)
-        testset = NCFDataset(testdata, self.svd)
+        trainset = self.data_clazz(traindata, self.svd)
+        testset = self.data_clazz(testdata, self.svd)
         return trainset, testset
 
     def __build_feature(self, uid, iid):
@@ -146,33 +205,53 @@ class SvdNCF(BaseModel):
             bi = 0
 
         feat = np.concatenate([user, item])
-        return feat, bu + bi
+        if self.svd.biased:
+            bias = bu + bi + self.svd.trainset.global_mean
+        else:
+            bias = 0
+        return feat, bias
 
 
-class NCFModel(nn.Module):
+class NCFClf(NCFModel):
     """
-    The Neural CF model
+    The classification variant of NCF Model
 
     """
 
-    def __init__(self, in_features=20, out_features=1,
-                 mlp_size=(30, 30, 10)):
-        super().__init__()
-        mlp_layers = [MLPLayer(in_features, mlp_size[0], short_cut=False)]
-        for in_f, out_f in zip(mlp_size[:-1], mlp_size[1:]):
-            mlp_layers.append(MLPLayer(in_f, out_f, short_cut=True))
-        self.mlp = nn.Sequential(*mlp_layers)
-        self.gmf = nn.Linear(in_features, mlp_size[-1])
-        self.final = nn.Linear(mlp_size[-1] * 2, 1)
-        self.relu = nn.ReLU()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.last = nn.Sigmoid()
 
-    def forward(self, x):
-        y1 = self.mlp(x)
-        y2 = self.gmf(x)
-        y = torch.cat([y1, y2], dim=1)
-        y = self.final(y)
-        y = self.relu(y)
-        return y
+
+class NCFClfDataset(NCFDataset):
+    def __init__(self, data, svd, biased=False, threshold=3):
+        super().__init__(data, svd, biased=False)
+        self.threshold = threshold
+
+    def __getitem__(self, idx):
+        feat, label = super().__getitem__(idx)
+        label = (label > self.threshold).float()
+        return feat, label
+
+
+class SvdNCFClf(SvdNCF):
+    "The classification variant of SVD NCF Model"
+
+    ncf_clazz = NCFClf
+
+    data_clazz = NCFClfDataset
+
+    def estimate(self, user_id, item_id):
+        pred = super().estimate(user_id, item_id)
+
+        lower, upper = self.trainset.rating_scale
+        return pred * (upper - lower) + lower
+
+    def estimate_batch(self, user_id, item_idx):
+        preds = super().estimate_batch(user_id, item_idx)
+
+        lower, upper = self.trainset.rating_scale
+        return preds * (upper - lower) + lower
 
 
 class MLPLayer(nn.Module):
@@ -195,32 +274,6 @@ class MLPLayer(nn.Module):
         if self.short_cut:
             y = x + y
         return y
-
-
-class NCFDataset(Dataset):
-    """
-    Dataset for NCF Model
-
-    """
-
-    def __init__(self, data, svd):
-        self.data = data
-        self.svd = svd
-
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, idx):
-        uid, iid, rating = self.data[idx]
-        uid = int(uid)
-        iid = int(iid)
-        user = self.svd.pu[uid]
-        item = self.svd.qi[iid]
-
-        feat = np.concatenate([user, item])
-        label = rating - self.svd.bi[iid] - self.svd.bu[uid]
-
-        return torch.Tensor(feat), torch.Tensor([label])
 
 
 def train_model(model, train_loader, test_loader, optimizer, loss_func,
