@@ -69,3 +69,12 @@ and refresh the recommendation list. It won't be shown anymore.
 #### Profile Page
 ![profile](docs/profile.png)
 You can check the books you rated on the profile page.
+
+## Notebooks
+
+The following notebook contains the details of our experiment:
+
+* **[Data Exploring](notebooks/Data%20Exploring.ipynb)**, showing the details of data and cleaning processes.
+* **[Base Algorithms Testing](notebooks/Parallel%20Hybrid%20Model%20and%20Test%20Base%20Model.ipynb)**, includes RMSE test for User-Based & Item-Based KNN, SVD, and NCF. It also declared a weighted hybrid model.
+* **[Algorithms Testing and Comparing](notebooks/Testing%20Algorithms.ipynb)**, shows the test results of baseline, SVD++, and hybrid models.
+* **[NCF after SVD](notebooks/NCF%20after%20SVD.ipynb)**, is the training process of the hybrid model SVD-NCF.
