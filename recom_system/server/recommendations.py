@@ -77,6 +77,19 @@ def cold_start_vector(sent, user_id):
         return result.rowcount
 
 
+def _get_user_vector(user_id):
+    with engine.begin() as conn:
+        user = conn.execute(
+            select(Users.vector).where(Users.id == user_id)
+        ).one()[0]
+
+    if user is None:
+        return np.zeros(DIM)
+    else:
+        user = np.array(user)
+    return user
+
+
 def recom_by_user_profile(user_id):
     with engine.begin() as conn:
         user = conn.execute(
@@ -154,13 +167,11 @@ def recom_by_knn_content(user_id):
             ))
         ).all()
     if len(ratings) == 0:
-        return []
-
-    # conver item id
-    ratings_inner = [(TRAINSET.to_inner_iid(i), r) for i, r in ratings]
+        rated = []
+    else:
+        rated = _get_rated_items(user_id)
 
     # filter items
-    rated = _get_rated_items(user_id)
     all_items = []
     inner_items = []
     for iid in range(TRAINSET.n_items):
@@ -170,8 +181,14 @@ def recom_by_knn_content(user_id):
         all_items.append(riid)
         inner_items.append(iid)
 
-    # pred the items
-    scores = ALGO_KNN_CONTENT.estimate_by_ratings(ratings_inner, inner_items)
+    if len(ratings) == 0:
+        scores = ALGO_KNN_CONTENT.estimate_by_profile(
+            _get_user_vector(user_id), inner_items)
+    else:
+        # conver item id
+        ratings_inner = [(TRAINSET.to_inner_iid(i), r) for i, r in ratings]
+        scores = ALGO_KNN_CONTENT.estimate_by_ratings(
+            ratings_inner, inner_items)
 
     # get top 10
     book_idx, scores = zip(*sorted(zip(all_items, scores),

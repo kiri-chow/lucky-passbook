@@ -53,6 +53,26 @@ class KNNViaContent(BaseModel):
 
         return self
 
+    def estimate_by_profile(self, user_profile, item_idx):
+        "return estimate result by real time ratings"
+        # get neighbors
+        _, neighbors = self.tree_.query(
+            user_profile.reshape(1, -1), self.k + 1)
+        neighbors = neighbors[0]
+
+        # user mean
+        user_mean = 0
+
+        preds = []
+        for iid in item_idx:
+            try:
+                pred = self.__base_estimate(
+                    iid, user_profile, neighbors, user_mean)
+            except PredictionImpossible:
+                pred = 0
+            preds.append(pred)
+        return preds
+
     def estimate_by_ratings(self, user_ratings, item_idx):
         "return estimate result by real time ratings"
         user_ratings = np.asarray(user_ratings)
